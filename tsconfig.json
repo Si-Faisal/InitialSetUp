@@ -1,0 +1,47 @@
+// {
+//   "compilerOptions": {
+//     "target": "esnext",
+//     "module": "esnext",
+//     "jsx": "react",
+//     // Add other options as needed
+//     "allowImportingTsExtensions": true ,// Allow importing files with '.tsx' extension
+//   },
+//   "include": [
+//     "src/**/*.tsx", // Include TypeScript files
+//     "src/**/*.ts",   // Include TypeScript files
+//     "src/main.jsx"
+//   ],
+//   "exclude": [
+//     "node_modules"
+//   ]
+// }
+
+{
+  "compilerOptions": {
+    "target": "esnext",
+    "module": "esnext",
+    "jsx": "react",
+    "moduleResolution": "node",
+    "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true,
+    // Other options remain unchanged
+
+    // If you're using TypeScript path mapping for module resolution
+    "baseUrl": "./",
+    "paths": {
+      "*": ["src/*"],
+      "react-redux": ["node_modules/react-redux/dist/react-redux.esm.js"]
+      // Add path aliases as needed for your project
+    }
+  },
+  "include": [
+    "src/**/*.tsx", // Include TypeScript files
+    "src/**/*.ts",  // Include TypeScript files
+    "src/main.jsx"
+    // Include other files you want to compile
+  ],
+  "exclude": [
+    "node_modules"
+    // Exclude directories or files from compilation
+  ]
+}
