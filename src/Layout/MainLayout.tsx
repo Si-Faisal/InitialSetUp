@@ -6,6 +6,7 @@ import FooterOne from '../Components/Footer/FooterOne';
 import { useEffect } from 'react';
 import { useDispatch } from 'react-redux';
 import { listenToAuthChanges } from '../Redux/Slice/FirebaseAuthSlice';
+import { AppDispatch } from 'Redux/Store/store';
 
 interface OutletProps {
     context?: unknown;
@@ -15,16 +16,14 @@ interface OutletProps {
   ): React.ReactElement | null;
 
 
-
-
-
-
-
-
 const MainLayout = () => {
   
 
   const location = useLocation();
+  const dispatch = useDispatch<AppDispatch>();
+  useEffect(()=>{
+    dispatch(listenToAuthChanges())
+  },[dispatch,listenToAuthChanges ])
 
   const noHeaderFooter = location.pathname.includes('login') || location.pathname.includes('signup');
     return (

@@ -9,6 +9,9 @@ import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import ToastifyContainer, { notify } from '../../Layout/Hooks/Notify/Notify';
 import { AppDispatch, RootState } from 'Redux/Store/store';
+import useAxiosSecure from './../../Redux/Axios/AxiosSecure/useAxiosSecure';
+import useAxiosPublic from '../../Redux/Axios/AxiosPublic/useAxiosPublic';
+import useUploadImg from '../../Hook/useUploadImg';
 
 enum GenderEnum {
     female = "female",
@@ -27,6 +30,14 @@ enum GenderEnum {
     ProfilePic : string
   }
 
+  interface user {
+    name: string | ""
+    email: string | ""
+    gender: string 
+    phone: string | ""
+    img: string | ""
+  }
+
 
   
 
@@ -35,12 +46,18 @@ enum GenderEnum {
 const SignUpRHF : React.FC = () => {
   const user = useSelector((state: RootState) => state.fireBaseAuth);
   const [isSignupError,setSignUpError] = useState("");
-  console.log(user);
+  const axiosSecure = useAxiosSecure();
+  const axiosPublic = useAxiosPublic();
+
+
+
   const dispatch = useDispatch<AppDispatch>();
   const navigate = useNavigate();
-  const [isGoogleset,setgooglelogged] = useState(true);
+  
+  const [isGoogleset,setgooglelogged] = useState(false);
 
   const GoogleLogin = async () => {
+
     try {
       await dispatch(UserGoogleLogin());
       setgooglelogged(true);
@@ -49,12 +66,9 @@ const SignUpRHF : React.FC = () => {
       console.error('Error with Google login:', error);
     }
   };
+
   
-  useEffect(() => {
-    if (user.user !== null && user.error == null && isGoogleset ==true) {
-      notify("Succesfully Create Your Account",navigate);
-    }
-  }, [user, notify,isGoogleset]);
+  
   
 
     const {
@@ -67,28 +81,70 @@ const SignUpRHF : React.FC = () => {
       } = useForm<IFormInput>();
 
  
+ 
 
       const onSubmit = async (data: IFormInput) => {
-        // console.log(data);
-        const userName = `${data.firstname} ${data.lastname}`
-        const email = data.email;
-        const password = data.confirmpassword;
+       
+        const fileInput = document.querySelector<HTMLInputElement>('input[type="file"]');
+        const imageFile = fileInput.files[0];
+        const formData = new FormData();
+        formData.append('image', imageFile);
+
+        try {
+          const res =await axiosPublic.post("/routes/uploadImg",formData)
         
-        const action =await dispatch(SignUpUser({ email, password }));
-          if(SignUpUser.fulfilled.match(action)){
-            reset();
-            if (user.user !== null && user.error == null && isSignupError ==='') {
+          if(res.data.success){
+
+            
+            const userName = `${data.firstname} ${data.lastname}`
+            const email = data.email;
+            const password = data.confirmpassword;
+            
+            const imgURL = res.data.data.display_url;
+           
+            const newUSer : user = {
+              email: data.email,
+              name: userName,
+              gender: data.gender,
+              phone: data.phone,
+              img: imgURL,
+              
+            }
+
+            const action =await dispatch(SignUpUser({ email, password }));
+            
+            if(SignUpUser.rejected.match(action)){
+              setSignUpError(action.payload);
+              
+             }
+
+            else if(SignUpUser.fulfilled.match(action)){
+              setSignUpError('');
+              const updatephotoURL = await dispatch(UserUpdateProfile(userName , imgURL ));
+             
+             dispatch(listenToAuthChanges())
+             const importUserData =await axiosPublic.post("/routes/user", newUSer);
+             dispatch(listenToAuthChanges())
+             
+             if(importUserData.data._id){
+              setSignUpError('');
+              console.log(isSignupError)
               notify("Succesfully Create Your Account",navigate);
-         }
-        }
-        else if(SignUpUser.rejected.match(action)){
-          setSignUpError(action.payload)
-        }
-          //  await dispatch(UserUpdateProfile(userName , data.ProfilePic ));
+              dispatch(listenToAuthChanges())
+              reset();
+             
+
+             }
+              
+              
+              
+              
+              }
+          }
           
-       
-       
-  
+        } catch (error) {
+          console.log(error)
+        }
         
      }
 
@@ -154,7 +210,7 @@ const SignUpRHF : React.FC = () => {
 </div>}
         
         </div>
-        <form onSubmit={handleSubmit(onSubmit)} className=' space-y-3  rounded-md p-6 lg:p-10 ' >
+        <form onSubmit={handleSubmit(onSubmit)} encType="multipart/form-data" className=' space-y-3  rounded-md p-6 lg:p-10 ' >
        
       <div className="grid gap-3 md:grid-cols-2">
           <div> 
@@ -295,6 +351,7 @@ const SignUpRHF : React.FC = () => {
         <div>
         <label className="my-2 file-input-label">Profile Picture</label>  
         <input {...register("ProfilePic")} type="file" className="file-input outline mt-2 outline-1 border-l-4 border-pink-600 outline-blue-500 focus:ring-2 file-input-bordered file-input-md w-full bg-gray-100  " />
+        {errors.ProfilePic && <p role="alert">{errors.ProfilePic.message}</p>}
         </div>
        
         <div className="checkbox" style={{ whiteSpace: 'nowrap' }}>

@@ -10,6 +10,7 @@ import SignUpRHF from "../Components/SignUp/SignUpRHF";
 // import Home from "../Pages/Home/Home"
 import PageHome from "../Pages/Home/PageHome";
 import LogInRHF from "../Components/Login/LogInRHF";
+import TestingField from "../Pages/TestingField/TestingField";
 
 const routerConfig: RouteObject[] = [
   {
@@ -27,6 +28,10 @@ const routerConfig: RouteObject[] = [
     {
       path:"/signup",
       element: <SignUpRHF></SignUpRHF>
+    },
+    {
+      path: "/testingField",
+      element:<TestingField></TestingField>
     }
   ]
   }

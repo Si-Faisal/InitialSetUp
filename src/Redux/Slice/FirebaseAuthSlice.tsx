@@ -2,10 +2,8 @@ import { useEffect, useState } from "react";
 import {createSlice, PayloadAction, createAsyncThunk, Dispatch} from "@reduxjs/toolkit";
 import { GoogleAuthProvider, createUserWithEmailAndPassword, getAuth, onAuthStateChanged, signInWithEmailAndPassword, signInWithPopup, signOut, updateProfile } from "firebase/auth";
 import { app } from "../../firebase/firebase.config";
-import useAxiosPublic from "../Axios/useAxiosPublic";
-import { useDispatch } from "react-redux";
-import { AppDispatch } from "Redux/Store/store";
-// import {useAxiosPublic} from "../Axios/useAxiosPublic"
+import { AnyAction } from '@reduxjs/toolkit'
+import useAxiosPublic from "../Axios/AxiosPublic/useAxiosPublic";
 const auth = getAuth(app);
 
 interface User {
@@ -32,21 +30,29 @@ const axiosPublic = useAxiosPublic();
 
 // update PRofile  start TODO
 
-export const UserUpdateProfile =(name : string,photo : string) =>(dispatch : any)=>{
-  updateProfile(auth.currentUser, {
-    displayName: name, photoURL: photo
-}).then(() => {
-    dispatch(listenToAuthChanges());
-  }).catch((error) => {
-    console.error(error);
-    // Dispatch an action or set an error state here if required
-  })
+export const UserUpdateProfile = (name: string, photo: string) => (dispatch: any) => {
+  if (name && photo) {
+    updateProfile(auth.currentUser, {
+      displayName: name,
+      photoURL: photo,
+    })
+      .then(() => {
+        dispatch(listenToAuthChanges());
+      })
+      .catch((error) => {
+        console.error(error);
+        // Dispatch an action or set an error state here if required
+      });
+  } else {
+    // Handle the scenario where name or photo is null/undefined
+    console.log("Name or photo is invalid.");
+  }
+};
 
-}
 
 // update PRofile end TODO
 
-export const UserLogOut =() =>(dispatch: any)=>{
+export const UserLogOut =() =>(dispatch: Dispatch<AnyAction>)=>{
    signOut(auth).then(() => {
     dispatch(setLoggedOutUser());
   }).catch((error) => {
@@ -66,7 +72,7 @@ export const UserGoogleLogin =createAsyncThunk<User, undefined, { rejectValue: s
   async (_, { rejectWithValue }) => {
     try {
       const response = await signInWithPopup(auth, googleProvider);
-      console.log("google Data",response.user);
+     
       const user = response.user;
       const NewUser : User = {
         email: user.email,
@@ -89,9 +95,11 @@ export const UserGoogleLogin =createAsyncThunk<User, undefined, { rejectValue: s
 
 export const listenToAuthChanges = () => async (dispatch : any) => {
     onAuthStateChanged(auth, async(user) => {
-      console.log("onStateChangedData",user);
+     
     
       if (user) {
+
+
         const NewUser : User = {
            email: user.email || '',
            phoneNumber: user.phoneNumber || '',
@@ -99,20 +107,22 @@ export const listenToAuthChanges = () => async (dispatch : any) => {
            uid: user.uid,
       }
        dispatch(setLoggedInUser(NewUser));
-      try {
-          const res =await axiosPublic.post('/routes/jwt', { email: user.email} )
-          console.log(res.data.token);
-          if (res.data.token) {
-                  localStorage.setItem('access-token', res.data.token);
-              }
 
-              
-        } catch (error) {
-          if(error){
-            localStorage.removeItem('access-token');
-          }
-          console.log(error);
+       try {
+        const res =await axiosPublic.post('/routes/jwt', { email: user.email} )
+        
+        if (res.data.token) {
+                localStorage.setItem('access-token', res.data.token);
+            }
+
+            
+      } catch (error) {
+        if(error){
+          localStorage.removeItem('access-token');
         }
+        console.log(error);
+      }
+      
        } else if(!user) {
         dispatch(setLoggedOutUser());
       }
@@ -157,7 +167,7 @@ const SignUpUser = createAsyncThunk<void, {email : string,password : string}, {r
         return ;
 
         } catch (error) {
-            console.log(error.message)
+            
             return rejectWithValue(error.message); 
         }
     }
@@ -195,8 +205,8 @@ const firebaseAuthSlice = createSlice({
             state.loading = true;
           })
           .addCase(loginUser.fulfilled, (state, action) => {
-            console.log(action);
-            console.log(state);
+           
+           
             state.loading = false;
             // state.user = action.payload;
             state.error = null;

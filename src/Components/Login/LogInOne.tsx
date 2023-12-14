@@ -3,7 +3,7 @@ import { useForm ,handleSubmit } from 'react-hook-form';
 import { Link,useNavigate } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
 import { useSelector } from "react-redux";
-import {loginUser} from "../../Redux/Slice/FirebaseAuthSlice";
+import {listenToAuthChanges, loginUser} from "../../Redux/Slice/FirebaseAuthSlice";
 import ToastifyContainer, { notify } from '../../Layout/Hooks/Notify/Notify';
 import loginillu from '../../assets/Images/logInBannar.png';
 import { AppDispatch, RootState } from 'Redux/Store/store';
@@ -17,8 +17,7 @@ type FormValues = {
 const LogInOne : React.FC = () => {
     const [isLoginError,setLoginError] = useState<string>("");
     const user = useSelector((state :RootState) => state.fireBaseAuth);
-    console.log(user);
-    console.log(isLoginError);
+    
     const dispatch = useDispatch<AppDispatch>();
     const navigate = useNavigate();
     const {  register,
@@ -28,14 +27,13 @@ const LogInOne : React.FC = () => {
         setError,reset } = useForm<FormValues>();
 
     const onSubmit = async (data: any) => {
-        console.log(data);
         
         const action =await dispatch(loginUser({ email: data.email, password: data.password }))
         if (loginUser.fulfilled.match(action)) {
             reset();
+            dispatch(listenToAuthChanges())
           } else if (loginUser.rejected.match(action)) {
-            // Handling rejected login
-            console.log(action.payload);
+           
             setLoginError(action.payload);
           } 
           

@@ -6,10 +6,7 @@ import router from './Routes/Routes.tsx'
 
 import {
   RouterProvider,
-} from "react-router-dom";
-
-
-// redux 
+} from "react-router-dom"; 
 import {Provider} from "react-redux";
 import store from "./Redux/Store/store.tsx"
 import { listenToAuthChanges } from './Redux/Slice/FirebaseAuthSlice.tsx'
